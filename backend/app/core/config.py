@@ -19,12 +19,12 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173"
 
-    # Default Models (Verified Active)
+    # Default Models (Verified Active & Ultra-Fast)
     GROQ_DEFAULT_MODEL: str = "allam-2-7b"
     GROQ_FAST_MODEL: str = "allam-2-7b"
-    GEMINI_DEFAULT_MODEL: str = "gemini-3.6-flash"
-    MISTRAL_DEFAULT_MODEL: str = "mistral-small-latest"
-    COHERE_DEFAULT_MODEL: str = "command-r-plus-08-2024"
+    GEMINI_DEFAULT_MODEL: str = "gemini-3.5-flash-lite"
+    MISTRAL_DEFAULT_MODEL: str = "ministral-8b-latest"
+    COHERE_DEFAULT_MODEL: str = "command-r-08-2024"
 
     model_config = SettingsConfigDict(
         env_file=str(ENV_PATH) if ENV_PATH.exists() else None,

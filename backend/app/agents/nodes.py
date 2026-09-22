@@ -154,52 +154,52 @@ Red-Team Notes: {critique}"""
     # Section 1: Vision (Groq/Cohere)
     async def draft_vision():
         p = f"{context}\n\nDraft Section 1: Verified Product Vision. Must include exact problem, scope boundaries, anti-scope, one-sentence and paragraph pitch, and success metrics. Target: 800 words."
-        return await llm_provider.generate(p, AGENT_1_RED_TEAM_PROMPT, preferred_provider="groq")
+        return await llm_provider.generate(p, AGENT_1_RED_TEAM_PROMPT, preferred_provider="groq", max_tokens=1200)
 
     # Section 3: Personas (Groq)
     async def draft_personas():
         p = f"{context}\n\nDraft Section 3: Target Audience & User Personas. Document Primary, Secondary, and Anti-Persona with daily routine, psychology, and WCAG AA accessibility requirements. Target: 1,500 words."
-        return await llm_provider.generate(p, AGENT_5_PERSONAS_PROMPT, preferred_provider="groq")
+        return await llm_provider.generate(p, AGENT_5_PERSONAS_PROMPT, preferred_provider="groq", max_tokens=1200)
 
     # Section 4: Competitors (Groq)
     async def draft_competitors():
         p = f"{context}\n\nDraft Section 4: Competitor Analysis & Moat. Detail top 5 direct competitors, 3 indirect, feature comparison matrix, and positioning statement. Target: 1,500 words."
-        return await llm_provider.generate(p, AGENT_6_COMPETITOR_PROMPT, preferred_provider="groq")
+        return await llm_provider.generate(p, AGENT_6_COMPETITOR_PROMPT, preferred_provider="groq", max_tokens=1200)
 
     # Section 5: Features (Groq)
     async def draft_features():
         p = f"{context}\n\nDraft Section 5: Full Product Feature Specification. For every MVP feature document: user flow, validation rules, error states, empty states, loading states, and success states. Target: 3,000 words."
-        return await llm_provider.generate(p, AGENT_4_FEATURE_SPEC_PROMPT, preferred_provider="groq")
+        return await llm_provider.generate(p, AGENT_4_FEATURE_SPEC_PROMPT, preferred_provider="groq", max_tokens=1500)
 
     # Section 7: API Contract (Groq)
     async def draft_api():
         p = f"{context}\n\nDraft Section 7: Full REST API Contract. Every endpoint: route, method, request JSON schema, response 200 JSON schema, error 400/401/404/500 schemas, auth, and rate limits. Target: 1,500 words."
-        return await llm_provider.generate(p, AGENT_8_API_CONTRACT_PROMPT, preferred_provider="groq")
+        return await llm_provider.generate(p, AGENT_8_API_CONTRACT_PROMPT, preferred_provider="groq", max_tokens=1200)
 
     # Section 8: File Architecture (Groq)
     async def draft_file_arch():
         p = f"{context}\n\nDraft Section 8: File & Folder Architecture. Complete directory tree, module responsibilities, naming conventions, and every single .env variable with description. Target: 800 words."
-        return await llm_provider.generate(p, "You are a Principal Software Architect. Provide the complete project folder structure.", preferred_provider="groq")
+        return await llm_provider.generate(p, "You are a Principal Software Architect. Provide the complete project folder structure.", preferred_provider="groq", max_tokens=1200)
 
     # Section 9: UI/UX (Groq)
     async def draft_ui_ux():
         p = f"{context}\n\nDraft Section 9: UI/UX Specification. Screen-by-screen breakdown, component trees, exact 6-digit hex color palette, typography scale, and responsive breakpoints. Target: 1,500 words."
-        return await llm_provider.generate(p, AGENT_7_UI_UX_PROMPT, preferred_provider="groq")
+        return await llm_provider.generate(p, AGENT_7_UI_UX_PROMPT, preferred_provider="groq", max_tokens=1200)
 
     # Section 10: Security (Groq)
     async def draft_security():
         p = f"{context}\n\nDraft Section 10: Security & Performance Requirements. Auth encryption, sanitization, rate limits, performance benchmarks (LCP < 2.0s, API p95 < 200ms). Target: 800 words."
-        return await llm_provider.generate(p, AGENT_9_SECURITY_PERFORMANCE_PROMPT, preferred_provider="groq")
+        return await llm_provider.generate(p, AGENT_9_SECURITY_PERFORMANCE_PROMPT, preferred_provider="groq", max_tokens=1200)
 
     # Section 11: Execution Phases (Groq)
     async def draft_execution():
         p = f"{context}\n\nDraft Section 11: Phased IDE Execution Instructions. Phase 1 to Phase 8 sequential instructions for the AI IDE with mandatory verification checklists. Target: 1,500 words."
-        return await llm_provider.generate(p, "You are an AI IDE Director. Detail Phase 1 to 8 execution instructions with strict verification checklists.", preferred_provider="groq")
+        return await llm_provider.generate(p, "You are an AI IDE Director. Detail Phase 1 to 8 execution instructions with strict verification checklists.", preferred_provider="groq", max_tokens=1200)
 
     # Section 12: Risks (Groq)
     async def draft_risks():
         p = f"{context}\n\nDraft Section 12: Known Risks & Exclusions. Deceptive complexities, junior developer anti-patterns, and deliberately excluded features with reasons. Target: 600 words."
-        return await llm_provider.generate(p, AGENT_10_RISKS_EXCLUSIONS_PROMPT, preferred_provider="groq")
+        return await llm_provider.generate(p, AGENT_10_RISKS_EXCLUSIONS_PROMPT, preferred_provider="groq", max_tokens=1000)
 
     sections_plan = [
         ("Section 1 (Vision)", "section_1_vision", draft_vision),
@@ -297,7 +297,8 @@ Provide only new, exhaustive technical content without repeating the introductio
             prompt=prompt,
             system_prompt="You are a Principal Software Engineer & Systems Architect. Provide exhaustive, concrete technical specifications and zero high-level fluff.",
             preferred_provider="groq",
-            temperature=0.6
+            temperature=0.6,
+            max_tokens=1000
         )
         combined = f"{current_text}\n\n### Exhaustive Implementation Details & Failure Modes\n\n{appendix}"
         w = count_words(combined)

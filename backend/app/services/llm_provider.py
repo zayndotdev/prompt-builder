@@ -68,7 +68,7 @@ class LLMProvider:
         Tries preferred provider first (Groq 0.5s), cascades immediately on rate limits or errors.
         """
         providers_order = [preferred_provider]
-        fallbacks = ["groq", "cohere", "mistral", "gemini"]
+        fallbacks = ["groq", "gemini", "mistral", "cohere"]
         for p in fallbacks:
             if p not in providers_order:
                 providers_order.append(p)
@@ -89,24 +89,24 @@ class LLMProvider:
                 try:
                     res = ""
                     if provider == "groq" and self._groq_client:
-                        groq_tokens = min(max_tokens, 1500)
+                        groq_tokens = min(max_tokens, 1200)
                         res = await asyncio.wait_for(
                             self._call_groq(prompt, system_prompt, temperature, groq_tokens),
-                            timeout=10.0
+                            timeout=8.0
                         )
-                    elif provider == "cohere" and self._cohere_client:
+                    elif provider == "gemini" and self._gemini_client:
                         res = await asyncio.wait_for(
-                            self._call_cohere(prompt, system_prompt, temperature, max_tokens),
-                            timeout=35.0
+                            self._call_gemini(prompt, system_prompt, temperature, max_tokens),
+                            timeout=20.0
                         )
                     elif provider == "mistral" and self._mistral_client:
                         res = await asyncio.wait_for(
                             self._call_mistral(prompt, system_prompt, temperature, max_tokens),
-                            timeout=25.0
+                            timeout=22.0
                         )
-                    elif provider == "gemini" and self._gemini_client:
+                    elif provider == "cohere" and self._cohere_client:
                         res = await asyncio.wait_for(
-                            self._call_gemini(prompt, system_prompt, temperature),
+                            self._call_cohere(prompt, system_prompt, temperature, max_tokens),
                             timeout=25.0
                         )
                     if res and len(res.strip()) > 0:
@@ -194,11 +194,12 @@ class LLMProvider:
 
         return await asyncio.to_thread(_sync_groq)
 
-    async def _call_gemini(self, prompt: str, system_prompt: str, temperature: float) -> str:
+    async def _call_gemini(self, prompt: str, system_prompt: str, temperature: float, max_tokens: int = 1500) -> str:
         def _sync_gemini():
             from google.genai import types
             config = types.GenerateContentConfig(
                 temperature=temperature,
+                max_output_tokens=min(max_tokens, 1500),
                 system_instruction=system_prompt if system_prompt else None
             )
             response = self._gemini_client.models.generate_content(
