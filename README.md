@@ -82,11 +82,11 @@ flowchart TD
 Prompt Builder operates entirely on free-tier LLM endpoints with an automatic cascade and failover router:
 
 ```
-[Preferred Provider] ➔ (429/Timeout) ➔ Cohere (command-r-plus) ➔ Groq (qwen-3.8-27b) ➔ Gemini (gemini-3.6-flash) ➔ Mistral (mistral-small)
+[Preferred Provider] ➔ (429/Timeout) ➔ Groq (openai/gpt-oss-120b) ➔ Cohere (command-r-plus) ➔ Mistral (mistral-small) ➔ Gemini (gemini-3.6-flash)
 ```
 
 - **Cohere (`command-r-plus-08-2024`):** Massive token throughput and exceptional architectural reasoning.
-- **Groq (`qwen/qwen3.8-27b`):** Sub-second generation speed (~500 tokens/sec) for rapid sections.
+- **Groq (`openai/gpt-oss-120b` / `openai/gpt-oss-20b`):** Ultra-fast generation speed (~500 tokens/sec) for rapid sections.
 - **Google Gemini (`gemini-3.6-flash`):** Google GenAI SDK integration for creative UI/UX and feature specs.
 - **Mistral (`mistral-small-latest`):** High reliability European open-weights model.
 - **DuckDuckGo Search (`ddgs`):** 100% free live web intelligence with zero API keys required.

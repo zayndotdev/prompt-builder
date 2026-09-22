@@ -31,9 +31,9 @@ class LLMProvider:
         # 2. Initialize Groq (Sub-second fast model)
         if settings.GROQ_API_KEY and settings.GROQ_API_KEY.startswith("gsk_"):
             try:
-                from groq import AsyncGroq
-                self._groq_client = AsyncGroq(api_key=settings.GROQ_API_KEY)
-                logger.info("Groq client initialized successfully.")
+                import groq
+                self._groq_client = groq.Groq(api_key=settings.GROQ_API_KEY, max_retries=0)
+                logger.info("Groq client initialized successfully with max_retries=0.")
             except Exception as e:
                 logger.warning(f"Failed to initialize Groq client: {e}")
 
@@ -92,7 +92,7 @@ class LLMProvider:
                         groq_tokens = min(max_tokens, 1500)
                         res = await asyncio.wait_for(
                             self._call_groq(prompt, system_prompt, temperature, groq_tokens),
-                            timeout=25.0
+                            timeout=10.0
                         )
                     elif provider == "cohere" and self._cohere_client:
                         res = await asyncio.wait_for(
@@ -156,18 +156,43 @@ class LLMProvider:
         return await asyncio.to_thread(_sync_cohere)
 
     async def _call_groq(self, prompt: str, system_prompt: str, temperature: float, max_tokens: int) -> str:
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
+        def _sync_groq():
+            import groq
+            import time
+            models_to_try = [settings.GROQ_DEFAULT_MODEL, settings.GROQ_FAST_MODEL]
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
 
-        response = await self._groq_client.chat.completions.create(
-            model=settings.GROQ_DEFAULT_MODEL,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens
-        )
-        return response.choices[0].message.content or ""
+            # Clamp max_tokens to 750 for reliable fast throughput
+            clamped_tokens = min(max_tokens, 750)
+            last_err = None
+            for model_name in models_to_try:
+                try:
+                    response = self._groq_client.chat.completions.create(
+                        model=model_name,
+                        messages=messages,
+                        temperature=temperature,
+                        max_tokens=clamped_tokens
+                    )
+                    if response.choices:
+                        msg = response.choices[0].message
+                        text = (msg.content or getattr(msg, "reasoning", "") or "").strip()
+                        if text:
+                            return text
+                except groq.RateLimitError as e:
+                    logger.info(f"Groq model {model_name} rate limited. Triggering immediate cascade...")
+                    raise e
+                except Exception as e:
+                    logger.warning(f"Groq model {model_name} error: {e}")
+                    last_err = e
+                    break
+            if last_err:
+                raise last_err
+            return ""
+
+        return await asyncio.to_thread(_sync_groq)
 
     async def _call_gemini(self, prompt: str, system_prompt: str, temperature: float) -> str:
         def _sync_gemini():

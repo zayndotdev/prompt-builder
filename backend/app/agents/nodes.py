@@ -117,6 +117,25 @@ Make definitive architectural decisions with explicit justifications for framewo
         "logs": state.get("logs", []) + [log_entry]
     }
 
+def update_job_progress(job_id: str, active_agent: str = None, current_step: str = None, log: str = None, section: tuple = None):
+    """Safely pushes incremental progress to the in-memory job store so SSE streams emit in real-time."""
+    if not job_id:
+        return
+    try:
+        from app.api.routes import jobs
+        if job_id in jobs:
+            if active_agent:
+                jobs[job_id]["active_agent"] = active_agent
+            if current_step:
+                jobs[job_id]["current_step"] = current_step
+            if log:
+                jobs[job_id]["logs"].append(log)
+            if section:
+                sec_key, sec_val = section
+                jobs[job_id]["sections"][sec_key] = sec_val
+    except Exception:
+        pass
+
 # --- NODE 4: SECTION DRAFTING SUITE (SECTIONS 1 TO 12) ---
 async def section_drafting_node(state: BlueprintState) -> Dict[str, Any]:
     """Drafts remaining specialized sections with concurrency pacing."""
@@ -194,15 +213,17 @@ Red-Team Notes: {critique}"""
         ("Section 11 (Execution Phases)", "section_11_execution_phases", draft_execution),
         ("Section 12 (Risks)", "section_12_risks", draft_risks),
     ]
-
+    job_id = state.get("job_id")
     results = {}
     for title, state_key, fn in sections_plan:
+        update_job_progress(job_id, active_agent=title, current_step=f"Drafting {title}...", log=f"Drafting {title}...")
         logger.info(f"===> Started drafting: {title}")
         content = await fn()
         w = count_words(content)
         logger.info(f"<=== Completed drafting: {title} ({w:,} words)")
         results[state_key] = content
-        await asyncio.sleep(0.8)
+        update_job_progress(job_id, section=(state_key, content), log=f"[{title}] Completed ({w:,} words)")
+        await asyncio.sleep(0.3)
 
     log_entry = "[Agents 4-10: Specialized Drafters] All 12 specialized architectural sections drafted successfully."
     response = {
@@ -227,63 +248,63 @@ async def inspector_node(state: BlueprintState) -> Dict[str, Any]:
         word_counts[sec_key] = count
         total_words += count
 
-        # If below min and hasn't exceeded 3 expansion attempts
+        # If below min and hasn't had an expansion pass
         curr_attempts = attempts.get(sec_key, 0)
-        if count < conf["min"] and curr_attempts < 3:
+        if count < conf["min"] and curr_attempts < 1:
             under_target.append(sec_key)
 
-    log_entry = f"[Agent 11: Inspector] Word count audit complete: {total_words:,} total words across 12 sections. Under target: {len(under_target)} sections."
+    log_entry = f"[Agent 11: Inspector] Word count audit complete: {total_words:,} total words across 12 sections. Expanding {len(under_target)} sections."
     return {
         "word_counts": word_counts,
         "total_words": total_words,
         "under_target_sections": under_target,
         "active_agent": "Word Count Inspector",
-        "current_step": f"Word count audit: {total_words:,} words",
+        "current_step": f"Word count audit: {total_words:,} words across 12 sections",
         "logs": state.get("logs", []) + [log_entry]
     }
 
 # --- NODE 6: SECTION EXPANDER LOOP ---
 async def expander_node(state: BlueprintState) -> Dict[str, Any]:
-    """Expands under-target sections concurrently with deep concrete details."""
+    """Expands under-target sections sequentially with deep concrete technical specifications."""
+    job_id = state.get("job_id")
     under_target = state.get("under_target_sections", [])
     attempts = dict(state.get("expansion_attempts", {}))
     updated_sections = {}
-    sem = asyncio.Semaphore(2)
 
-    async def expand_single(sec_key: str):
+    for sec_key in under_target:
         current_text = state.get(sec_key, "")
         conf = SECTION_THRESHOLDS.get(sec_key, {"title": sec_key, "min": 800, "target": 1200})
         current_words = count_words(current_text)
         deficit = max(conf["min"] - current_words, 200)
         attempts[sec_key] = attempts.get(sec_key, 0) + 1
 
-        prompt = f"""Current Draft of {conf['title']} ({current_words} words, deficit of {deficit} words):
-\"\"\"{current_text}\"\"\"
+        update_job_progress(job_id, active_agent="Section Expander", current_step=f"Deepening {conf['title']}...", log=f"Deepening {conf['title']} with exhaustive specifications...")
+
+        prompt = f"""Section: {conf['title']}
+Context Summary of Current Draft:
+\"\"\"{current_text[:1200]}\"\"\"
 
 EXPANSION DIRECTIVE:
-This section is currently under the required threshold. You must expand it to exceed {conf['target']} words.
-Do NOT use generic fluff. Deepen the content by adding:
-- Concrete real-world edge cases and failure modes.
-- Complete data schemas, regex validation patterns, and exact error codes.
-- Step-by-step user interactions and technical implementation details.
-Rewrite the section in full, incorporating all existing points and expanding with rigorous technical specificity."""
+Provide exhaustive, highly technical implementation sub-specifications to complement and expand this section.
+Focus purely on:
+- Complete step-by-step edge cases, failure recovery workflows, and state transitions.
+- Concrete TypeScript types, JSON schemas, regex validation patterns, and HTTP status codes.
+- Precise implementation constraints, memory budgets, and security verification checklists.
+Provide only new, exhaustive technical content without repeating the introduction."""
 
-        async with sem:
-            logger.info(f"===> Expanding section: {conf['title']} (current: {current_words} words)")
-            expanded = await llm_provider.generate(
-                prompt=prompt,
-                system_prompt="You are a Senior Technical Specification Writer. Expand the section with exhaustive technical depth and complete detail.",
-                temperature=0.6
-            )
-            w = count_words(expanded)
-            logger.info(f"<=== Finished expanding: {conf['title']} ({w:,} words)")
-            return sec_key, expanded
-
-    tasks = [expand_single(sec_key) for sec_key in under_target]
-    if tasks:
-        results = await asyncio.gather(*tasks)
-        for sec_key, exp_text in results:
-            updated_sections[sec_key] = exp_text
+        logger.info(f"===> Expanding section: {conf['title']} (current: {current_words} words)")
+        appendix = await llm_provider.generate(
+            prompt=prompt,
+            system_prompt="You are a Principal Software Engineer & Systems Architect. Provide exhaustive, concrete technical specifications and zero high-level fluff.",
+            preferred_provider="groq",
+            temperature=0.6
+        )
+        combined = f"{current_text}\n\n### Exhaustive Implementation Details & Failure Modes\n\n{appendix}"
+        w = count_words(combined)
+        logger.info(f"<=== Finished expanding: {conf['title']} ({w:,} words)")
+        updated_sections[sec_key] = combined
+        update_job_progress(job_id, section=(sec_key, combined), log=f"[{conf['title']}] Expanded to {w:,} words")
+        await asyncio.sleep(0.3)
 
     log_entry = f"[Expander Loop] Expanded {len(under_target)} sections to satisfy word-count thresholds."
     result = {

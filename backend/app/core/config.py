@@ -20,8 +20,8 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173"
 
     # Default Models (Verified Active)
-    GROQ_DEFAULT_MODEL: str = "qwen/qwen3.8-27b"
-    GROQ_FAST_MODEL: str = "qwen/qwen3.8-27b"
+    GROQ_DEFAULT_MODEL: str = "allam-2-7b"
+    GROQ_FAST_MODEL: str = "allam-2-7b"
     GEMINI_DEFAULT_MODEL: str = "gemini-3.6-flash"
     MISTRAL_DEFAULT_MODEL: str = "mistral-small-latest"
     COHERE_DEFAULT_MODEL: str = "command-r-plus-08-2024"
