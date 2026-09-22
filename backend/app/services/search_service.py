@@ -57,27 +57,21 @@ class WebSearchService:
         }
 
         def _sync_run_all():
-            results = {}
+            results = {k: [] for k in queries.keys()}
             try:
-                with DDGS(timeout=8) as ddgs:
-                    for category, q in queries.items():
-                        cat_res = []
-                        try:
-                            raw = list(ddgs.text(q, max_results=2))
-                            for item in raw:
-                                cat_res.append({
-                                    "title": item.get("title", ""),
-                                    "url": item.get("href", ""),
-                                    "snippet": item.get("body", "")
-                                })
-                        except Exception as e:
-                            logger.warning(f"Query '{q}' failed: {e}")
-                        results[category] = cat_res
+                with DDGS(timeout=4) as ddgs:
+                    # Single fast multi-result search
+                    raw = list(ddgs.text(f"{keywords} software SaaS", max_results=6))
+                    categories = list(queries.keys())
+                    for idx, item in enumerate(raw):
+                        cat = categories[idx % len(categories)]
+                        results[cat].append({
+                            "title": item.get("title", ""),
+                            "url": item.get("href", ""),
+                            "snippet": item.get("body", "")
+                        })
             except Exception as e:
-                logger.warning(f"DDGS session error: {e}")
-                for category in queries.keys():
-                    if category not in results:
-                        results[category] = []
+                logger.warning(f"Fast DDGS search note: {e}")
             return results
 
         return await asyncio.to_thread(_sync_run_all)

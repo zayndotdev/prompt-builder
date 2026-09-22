@@ -137,40 +137,40 @@ Red-Team Notes: {critique}"""
         p = f"{context}\n\nDraft Section 1: Verified Product Vision. Must include exact problem, scope boundaries, anti-scope, one-sentence and paragraph pitch, and success metrics. Target: 800 words."
         return await llm_provider.generate(p, AGENT_1_RED_TEAM_PROMPT, preferred_provider="groq")
 
-    # Section 3: Personas (Cohere)
+    # Section 3: Personas (Groq)
     async def draft_personas():
         p = f"{context}\n\nDraft Section 3: Target Audience & User Personas. Document Primary, Secondary, and Anti-Persona with daily routine, psychology, and WCAG AA accessibility requirements. Target: 1,500 words."
-        return await llm_provider.generate(p, AGENT_5_PERSONAS_PROMPT, preferred_provider="cohere")
+        return await llm_provider.generate(p, AGENT_5_PERSONAS_PROMPT, preferred_provider="groq")
 
     # Section 4: Competitors (Groq)
     async def draft_competitors():
         p = f"{context}\n\nDraft Section 4: Competitor Analysis & Moat. Detail top 5 direct competitors, 3 indirect, feature comparison matrix, and positioning statement. Target: 1,500 words."
         return await llm_provider.generate(p, AGENT_6_COMPETITOR_PROMPT, preferred_provider="groq")
 
-    # Section 5: Features (Cohere)
+    # Section 5: Features (Groq)
     async def draft_features():
         p = f"{context}\n\nDraft Section 5: Full Product Feature Specification. For every MVP feature document: user flow, validation rules, error states, empty states, loading states, and success states. Target: 3,000 words."
-        return await llm_provider.generate(p, AGENT_4_FEATURE_SPEC_PROMPT, preferred_provider="cohere")
+        return await llm_provider.generate(p, AGENT_4_FEATURE_SPEC_PROMPT, preferred_provider="groq")
 
-    # Section 7: API Contract (Cohere)
+    # Section 7: API Contract (Groq)
     async def draft_api():
         p = f"{context}\n\nDraft Section 7: Full REST API Contract. Every endpoint: route, method, request JSON schema, response 200 JSON schema, error 400/401/404/500 schemas, auth, and rate limits. Target: 1,500 words."
-        return await llm_provider.generate(p, AGENT_8_API_CONTRACT_PROMPT, preferred_provider="cohere")
+        return await llm_provider.generate(p, AGENT_8_API_CONTRACT_PROMPT, preferred_provider="groq")
 
     # Section 8: File Architecture (Groq)
     async def draft_file_arch():
         p = f"{context}\n\nDraft Section 8: File & Folder Architecture. Complete directory tree, module responsibilities, naming conventions, and every single .env variable with description. Target: 800 words."
         return await llm_provider.generate(p, "You are a Principal Software Architect. Provide the complete project folder structure.", preferred_provider="groq")
 
-    # Section 9: UI/UX (Cohere)
+    # Section 9: UI/UX (Groq)
     async def draft_ui_ux():
         p = f"{context}\n\nDraft Section 9: UI/UX Specification. Screen-by-screen breakdown, component trees, exact 6-digit hex color palette, typography scale, and responsive breakpoints. Target: 1,500 words."
-        return await llm_provider.generate(p, AGENT_7_UI_UX_PROMPT, preferred_provider="cohere")
+        return await llm_provider.generate(p, AGENT_7_UI_UX_PROMPT, preferred_provider="groq")
 
-    # Section 10: Security (Cohere)
+    # Section 10: Security (Groq)
     async def draft_security():
         p = f"{context}\n\nDraft Section 10: Security & Performance Requirements. Auth encryption, sanitization, rate limits, performance benchmarks (LCP < 2.0s, API p95 < 200ms). Target: 800 words."
-        return await llm_provider.generate(p, AGENT_9_SECURITY_PERFORMANCE_PROMPT, preferred_provider="cohere")
+        return await llm_provider.generate(p, AGENT_9_SECURITY_PERFORMANCE_PROMPT, preferred_provider="groq")
 
     # Section 11: Execution Phases (Groq)
     async def draft_execution():

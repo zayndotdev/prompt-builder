@@ -59,16 +59,16 @@ class LLMProvider:
         self,
         prompt: str,
         system_prompt: str = "",
-        preferred_provider: str = "cohere",
+        preferred_provider: str = "groq",
         temperature: float = 0.7,
         max_tokens: int = 4096
     ) -> str:
         """
         Generate text with automatic multi-provider fallback.
-        Tries preferred provider first, cascades immediately on rate limits or errors.
+        Tries preferred provider first (Groq 0.5s), cascades immediately on rate limits or errors.
         """
         providers_order = [preferred_provider]
-        fallbacks = ["cohere", "groq", "mistral", "gemini"]
+        fallbacks = ["groq", "cohere", "mistral", "gemini"]
         for p in fallbacks:
             if p not in providers_order:
                 providers_order.append(p)
@@ -88,26 +88,26 @@ class LLMProvider:
             for provider in active_order:
                 try:
                     res = ""
-                    if provider == "cohere" and self._cohere_client:
-                        res = await asyncio.wait_for(
-                            self._call_cohere(prompt, system_prompt, temperature, max_tokens),
-                            timeout=90.0
-                        )
-                    elif provider == "groq" and self._groq_client:
-                        groq_tokens = min(max_tokens, 1000)
+                    if provider == "groq" and self._groq_client:
+                        groq_tokens = min(max_tokens, 1500)
                         res = await asyncio.wait_for(
                             self._call_groq(prompt, system_prompt, temperature, groq_tokens),
-                            timeout=45.0
+                            timeout=25.0
+                        )
+                    elif provider == "cohere" and self._cohere_client:
+                        res = await asyncio.wait_for(
+                            self._call_cohere(prompt, system_prompt, temperature, max_tokens),
+                            timeout=35.0
                         )
                     elif provider == "mistral" and self._mistral_client:
                         res = await asyncio.wait_for(
                             self._call_mistral(prompt, system_prompt, temperature, max_tokens),
-                            timeout=45.0
+                            timeout=25.0
                         )
                     elif provider == "gemini" and self._gemini_client:
                         res = await asyncio.wait_for(
                             self._call_gemini(prompt, system_prompt, temperature),
-                            timeout=45.0
+                            timeout=25.0
                         )
                     if res and len(res.strip()) > 0:
                         return res
